@@ -70,12 +70,18 @@ out_file.write('Storm_Season, Counties_Impacted\n')
 #Iterate through each season 
 for storm_season in storm_dict.keys():
 
+    #Initialize season storm counter
+    season_counter = 0
+
     #Get the list of storms in the season
     storm_names = storm_dict[storm_season]
 
     #Iterate through storm names 
     for storm_name in storm_names:
-        # iterate through three years
+
+        #update status
+        print(f'Working on {storm_names} in {storm_season}')
+   
         #Select points for a given storm
         arcpy.analysis.Select(
             in_features=ibtracs_NA_points, 
@@ -99,5 +105,13 @@ for storm_season in storm_dict.keys():
         # Count the counties 
         county_count = int(arcpy.GetCount_management(select_result).getOutput(0))
         print(storm_season, storm_name, county_count)
+
+        #increment the season counter
+        season_counter += county_count
+
+    #print out storm season and county count
+    out_file.write(f'{storm_season}, {season_counter}\n')
+
+out_file.close()
 
 #%%

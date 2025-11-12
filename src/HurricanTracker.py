@@ -31,18 +31,36 @@ storm_track_points =  "memory\\track_points"
 storm_track_line = "memory\\Tracklines"
 
 #%%
-#Create list of storms:
-cursor = arcpy.da.SearchCursor(
-    in_table = ibtracs_NA_points,
-    where_clause = 'SEASON = 2000',
-    field_names = ['NAME']
-)
+#Create dictionary of storm names in season
+#Initialize dictionary
 
-del cursor
+storm_dict = {}
+
+#Iterate through years
+for storm_season in range(2000,2004):
+
+    #Initialize a storm name list:
+    storm_names = []
+
+    #Create list of storms:
+    cursor = arcpy.da.SearchCursor(
+        in_table = ibtracs_NA_points,
+        where_clause = f'SEASON = {storm_season}',
+        field_names = ['NAME']
+    )
+    for row in cursor:
+        storm_name = row[0]
+        #append to list, only if not on list
+        if not storm_name in storm_names:
+            storm_names.append(row[0])
+
+    del cursor
+    storm_dict[storm_season] = storm_names
 # %% [markdown]
 # #### Select point features corresponding to a specific storm (season & name)
 
 # %%
+# iterate through three years
 #Select points for a given storm
 arcpy.analysis.Select(
     in_features=ibtracs_NA_points, 
@@ -50,10 +68,6 @@ arcpy.analysis.Select(
     where_clause=f"SEASON = {storm_season} And NAME = '{storm_name}'"
 )
 
-# %% [markdown]
-# #### Connect Points to a Track line
-
-# %%
 #Connect point to a track line
 arcpy.management.PointsToLine(
     Input_Features=storm_track_points,
@@ -61,10 +75,6 @@ arcpy.management.PointsToLine(
     Sort_Field='ISO_TIME'
 )
 
-# %% [markdown]
-# #### Select Counties Intersecting Point
-
-# %%
 #Select intersecting counties
 select_output = arcpy.management.SelectLayerByLocation(
     in_layer=usa_counties, 
@@ -73,8 +83,6 @@ select_output = arcpy.management.SelectLayerByLocation(
     )
 select_result = select_output.getOutput(0)
 
-
-# %% 
 # Count the counties 
 
 county_count = int(arcpy.GetCount_management(select_result).getOutput(0))
